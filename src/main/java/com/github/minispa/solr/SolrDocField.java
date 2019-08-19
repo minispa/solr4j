@@ -2,12 +2,13 @@ package com.github.minispa.solr;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
 @Data
-public class SolrDocField {
+public class SolrDocField implements Serializable {
 
     public static final String DEFAULT = "#default";
 

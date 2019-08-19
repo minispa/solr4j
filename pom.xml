@@ -65,6 +65,9 @@
                     <encoding>utf-8</encoding>
                     <debug>true</debug>
                     <skip>true</skip>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
         </plugins>

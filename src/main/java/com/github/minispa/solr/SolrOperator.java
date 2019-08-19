@@ -1,6 +1,7 @@
 package com.github.minispa.solr;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface SolrOperator {
 
@@ -17,5 +18,7 @@ public interface SolrOperator {
     <T> SolrDocResult<T> query(String collection, SolrQ solrQ, Class<T> tClass);
 
     <T> T query(String collection, String id, Class<T> tClass);
+
+    <T> List<T> query(String collection, Collection<String> ids, Class<T> tClass);
 
 }

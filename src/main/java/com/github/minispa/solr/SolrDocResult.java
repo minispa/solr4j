@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class SolrQDocResult<T> implements Serializable {
+public class SolrDocResult<T> implements Serializable {
 
     private long numFound;
     private long start;

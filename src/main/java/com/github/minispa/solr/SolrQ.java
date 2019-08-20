@@ -420,7 +420,7 @@ public class SolrQ implements Serializable {
         }
     }
 
-    private Iterator<String> getParameterNamesIterator() {
+    public Iterator<String> getParameterNamesIterator() {
         return vals.keySet().iterator();
     }
 

@@ -12,4 +12,11 @@ public class SolrDocResult<T> implements Serializable {
     private long start;
     private List<T> docs;
 
+    public SolrDocResult() {}
+
+    public SolrDocResult(long numFound, long start, List<T> docs) {
+        this.numFound = numFound;
+        this.start = start;
+        this.docs = docs;
+    }
 }

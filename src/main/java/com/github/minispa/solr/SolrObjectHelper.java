@@ -1,10 +1,10 @@
 package com.github.minispa.solr;
 
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
-import org.apache.solr.common.SolrInputDocument;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 
 import java.lang.reflect.*;
+//import java.nio.ByteBuffer;
 import java.nio.ByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -12,21 +12,21 @@ import java.util.*;
 
 public class SolrObjectHelper {
 
-    public static <T> List<T> getBeans(Class<T> clazz, SolrDocumentList solrDocList) {
+    public static <T> List<T> getBeans(Class<T> clazz, JSONArray solrDocList) {
         List<SolrDocField> fields = getDocFields(clazz);
         List<T> result = new ArrayList<>(solrDocList.size());
-
-        for (SolrDocument sdoc : solrDocList) {
+        for (int i = 0; i < solrDocList.size(); i++) {
+            JSONObject sdoc = solrDocList.getJSONObject(i);
             result.add(getBean(clazz, fields, sdoc));
         }
         return result;
     }
 
-    public static <T> T getBean(Class<T> clazz, SolrDocument solrDoc) {
+    public static <T> T getBean(Class<T> clazz, JSONObject solrDoc) {
         return getBean(clazz, null, solrDoc);
     }
 
-    private static <T> T getBean(Class<T> clazz, List<SolrDocField> fields, SolrDocument solrDoc) {
+    private static <T> T getBean(Class<T> clazz, List<SolrDocField> fields, JSONObject solrDoc) {
         if (fields == null) {
             fields = getDocFields(clazz);
         }
@@ -46,22 +46,22 @@ public class SolrObjectHelper {
         return collectInfo(clazz);
     }
 
-    public static String getCollection(Class clazz) {
-        SolrCollection solrCollection = (SolrCollection) clazz.getDeclaredAnnotation(SolrCollection.class);
+    public static String getCollection(Object obj) {
+        SolrCollection solrCollection = obj.getClass().getDeclaredAnnotation(SolrCollection.class);
         return solrCollection.value();
     }
 
-    public static <T> SolrObject<SolrInputDocument> toSolrObject(T object) {
-        return new SolrObject<>(getCollection(object.getClass()), toSolrInputDocument(object));
+    public static <T> SolrObject<SolrInputObject> toSolrObject(T object) {
+        return new SolrObject<>(getCollection(object), toSolrInputObject(object));
     }
 
-    public static SolrInputDocument toSolrInputDocument(Object obj) {
+    public static SolrInputObject toSolrInputObject(Object obj) {
         List<SolrDocField> fields = getDocFields(obj.getClass());
         if (fields.isEmpty()) {
             throw new SolrBindingException("class: " + obj.getClass() + " does not define any fields.");
         }
 
-        SolrInputDocument doc = new SolrInputDocument();
+        SolrInputObject doc = new SolrInputObject();
         for (SolrDocField field : fields) {
             if (field.getDynamicFieldNamePatternMatcher() != null &&
                     field.get(obj) != null &&
@@ -82,25 +82,24 @@ public class SolrObjectHelper {
         return doc;
     }
 
-    private static void addChild(Object obj, SolrDocField field, SolrInputDocument doc) {
+    private static void addChild(Object obj, SolrDocField field, SolrInputObject doc) {
         Object val = field.get(obj);
         if (val == null) return;
         if (val instanceof Collection) {
             Collection collection = (Collection) val;
             for (Object o : collection) {
-                SolrInputDocument child = toSolrInputDocument(o);
+                SolrInputObject child = toSolrInputObject(o);
                 doc.addChildDocument(child);
             }
         } else if (val.getClass().isArray()) {
             Object[] objs = (Object[]) val;
-            for (Object o : objs) doc.addChildDocument(toSolrInputDocument(o));
+            for (Object o : objs) doc.addChildDocument(toSolrInputObject(o));
         } else {
-            doc.addChildDocument(toSolrInputDocument(val));
+            doc.addChildDocument(toSolrInputObject(val));
         }
     }
 
 
-    // Needs access to possibly private @Field annotated fields/methods
     private static List<SolrDocField> collectInfo(Class clazz) {
         List<SolrDocField> fields = new ArrayList<>();
         Class superClazz = clazz;
@@ -130,28 +129,29 @@ public class SolrObjectHelper {
         return fields;
     }
 
-    private static Object getFieldValue(SolrDocField docField, SolrDocument solrDocument) {
+    private static Object getFieldValue(SolrDocField docField, JSONObject solrDocument) {
         if (docField.getChild() != null) {
-            List<SolrDocument> children = solrDocument.getChildDocuments();
+            JSONArray children = solrDocument.getJSONArray(docField.getName());
             if (children == null || children.isEmpty()) return null;
             if (docField.isList()) {
                 ArrayList list = new ArrayList(children.size());
-                for (SolrDocument c : children) {
+                for (int i = 0; i < children.size(); i++) {
+                    JSONObject c = children.getJSONObject(i);
                     list.add(getBean(docField.getType(), docField.getChild(), c));
                 }
                 return list;
             } else if (docField.isArray()) {
                 Object[] arr = (Object[]) Array.newInstance(docField.getType(), children.size());
                 for (int i = 0; i < children.size(); i++) {
-                    arr[i] = getBean(docField.getType(), docField.getChild(), children.get(i));
+                    arr[i] = getBean(docField.getType(), docField.getChild(), children.getJSONObject(i));
                 }
                 return arr;
 
             } else {
-                return getBean(docField.getType(), docField.getChild(), children.get(0));
+                return getBean(docField.getType(), docField.getChild(), children.getJSONObject(0));
             }
         }
-        Object fieldValue = solrDocument.getFieldValue(docField.getName());
+        Object fieldValue = solrDocument.get(docField.getName());
         if (fieldValue != null) {
             //this is not a dynamic field. so return the value
             return fieldValue;
@@ -170,9 +170,9 @@ public class SolrObjectHelper {
             allValuesList = new ArrayList();
         }
 
-        for (String field : solrDocument.getFieldNames()) {
+        for (String field : solrDocument.keySet()) {
             if (docField.getDynamicFieldNamePatternMatcher().matcher(field).find()) {
-                Object val = solrDocument.getFieldValue(field);
+                Object val = solrDocument.get(field);
                 if (val == null) {
                     continue;
                 }
@@ -210,7 +210,7 @@ public class SolrObjectHelper {
         }
     }
 
-    private static <T> void inject(SolrDocField docField, T obj, SolrDocument sdoc) {
+    private static <T> void inject(SolrDocField docField, T obj, JSONObject sdoc) {
         Object val = getFieldValue(docField, sdoc);
         if (val == null) {
             return;
@@ -251,8 +251,13 @@ public class SolrObjectHelper {
         }
         try {
             if (docField.getField() != null) {
-                docField.getField().set(obj, v);
-            } else if (docField.getSetter() != null) {
+                try {
+                    docField.getField().set(obj, v);
+                } catch (Exception e) {
+                    // Oh, no!!! But, don't worry...
+                }
+            }
+            if (docField.getSetter() != null) {
                 docField.getSetter().invoke(obj, v);
             }
         } catch (Exception e) {

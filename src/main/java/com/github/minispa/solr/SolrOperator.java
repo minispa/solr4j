@@ -9,9 +9,9 @@ public interface SolrOperator {
 
     void addOrUpdate(Collection<Object> objects);
 
-    void delete(String collection, SolrQ solrQ);
+    void delete(String collection, String query);
 
-    void delete(String collection, String id);
+    void delete(String collection, List<String> ids);
 
     Object query(String collection, SolrQ solrQ);
 

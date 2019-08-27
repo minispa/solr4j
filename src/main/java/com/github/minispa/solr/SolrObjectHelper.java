@@ -4,13 +4,16 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.lang.reflect.*;
-//import java.nio.ByteBuffer;
 import java.nio.ByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SolrObjectHelper {
+
+    private final static Map<Class, List<SolrDocField>> infoCache = new ConcurrentHashMap<>();
+
 
     public static <T> List<T> getBeans(Class<T> clazz, JSONArray solrDocList) {
         List<SolrDocField> fields = getDocFields(clazz);
@@ -43,7 +46,17 @@ public class SolrObjectHelper {
     }
 
     public static List<SolrDocField> getDocFields(Class clazz) {
-        return collectInfo(clazz);
+        List<SolrDocField> fields = infoCache.get(clazz);
+        if(fields == null) {
+            synchronized(infoCache) {
+                fields = infoCache.get(clazz);
+                if(fields != null) {
+                    return fields;
+                }
+                infoCache.put(clazz, fields = collectInfo(clazz));
+            }
+        }
+        return fields;
     }
 
     public static String getCollection(Object obj) {

@@ -9,17 +9,17 @@ public interface SolrOperator {
 
     void addOrUpdate(Collection<Object> objects);
 
-    void delete(String collection, String query);
+    void deleteByQuery(String collection, String query);
 
-    void delete(String collection, List<String> ids);
+    void deleteById(String collection, List<String> ids);
 
     Object query(String collection, SolrQ solrQ);
 
-    <T> SolrDocResult<T> query(String collection, SolrQ solrQ, Class<T> tClass);
+    <T> SolrDocResult<T> query(SolrQ solrQ, Class<T> tClass);
 
-    <T> T query(String collection, String id, Class<T> tClass);
+    <T> T queryById(String id, Class<T> tClass);
 
-    <T> List<T> query(String collection, Collection<String> ids, Class<T> tClass);
+    <T> List<T> queryById(Collection<String> ids, Class<T> tClass);
 
     void deltaImport(String collection);
 

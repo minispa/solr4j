@@ -424,4 +424,18 @@ public class SolrQ implements Serializable {
         return vals.keySet().iterator();
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder(128);
+        boolean first = true;
+        for (final Iterator<String> it = getParameterNamesIterator(); it.hasNext();) {
+            final String name = it.next();
+            for (String val : getParams(name)) {
+                sb.append(first ? "" : '&').append(name).append('=').append(val);
+                first = false;
+            }
+        }
+        return sb.toString();
+    }
+
 }

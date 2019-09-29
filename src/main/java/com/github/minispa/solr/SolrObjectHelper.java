@@ -59,13 +59,13 @@ public class SolrObjectHelper {
         return fields;
     }
 
-    public static String getCollection(Object obj) {
-        SolrCollection solrCollection = obj.getClass().getDeclaredAnnotation(SolrCollection.class);
+    public static String getCollection(Class<?> clazz) {
+        SolrCollection solrCollection = clazz.getDeclaredAnnotation(SolrCollection.class);
         return solrCollection.value();
     }
 
     public static <T> SolrObject<SolrInputObject> toSolrObject(T object) {
-        return new SolrObject<>(getCollection(object), toSolrInputObject(object));
+        return new SolrObject<>(getCollection(object.getClass()), toSolrInputObject(object));
     }
 
     public static SolrInputObject toSolrInputObject(Object obj) {

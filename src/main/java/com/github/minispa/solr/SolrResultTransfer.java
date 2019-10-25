@@ -53,6 +53,19 @@ public class SolrResultTransfer {
         return new SolrHighlightingResult<>(docResult, highlighting);
     }
 
+    public static <T> SolrCursorResult<T> toCursorResult(Class<T> tClass, JSONObject solrResponseObj) {
+        return new SolrCursorResult<>(toDocResult(tClass, solrResponseObj), solrResponseObj.getString(SolrQ.CURSOR_MARK_NEXT));
+    }
+
+    public static <T> SolrDocResult<T> toDocResult(Class<T> tClass, JSONObject solrResponseObj) {
+        JSONObject responseObj = solrResponseObj.getJSONObject(SolrQ.RESPONSE);
+        long numFound = responseObj.getLongValue(SolrQ.NUM_FOUND);
+        long start = responseObj.getLongValue(SolrQ.START);
+        JSONArray docArr = responseObj.getJSONArray(SolrQ.DOCS);
+        List<T> docs = SolrObjectHelper.getBeans(tClass, docArr);
+        return new SolrDocResult<>(numFound, start, docs);
+    }
+
     private SolrResultTransfer() {}
 
 }

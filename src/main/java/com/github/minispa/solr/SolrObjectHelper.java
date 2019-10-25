@@ -3,6 +3,7 @@ package com.github.minispa.solr;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.nio.ByteBuffer;
 import java.security.AccessController;
@@ -59,8 +60,13 @@ public class SolrObjectHelper {
         return fields;
     }
 
-    public static String getCollection(Class<?> clazz) {
-        SolrCollection solrCollection = clazz.getDeclaredAnnotation(SolrCollection.class);
+    public static String getCollection(Object object) {
+        SolrCollection solrCollection;
+        if(object instanceof Class) {
+            solrCollection = ((Class<?>) object).getDeclaredAnnotation(SolrCollection.class);
+        } else {
+            solrCollection = object.getClass().getDeclaredAnnotation(SolrCollection.class);
+        }
         return solrCollection.value();
     }
 

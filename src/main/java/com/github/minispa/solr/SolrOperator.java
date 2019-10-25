@@ -1,19 +1,24 @@
 package com.github.minispa.solr;
 
+import com.alibaba.fastjson.JSONObject;
+import com.github.minispa.solr.update.SolrUpdateObject;
+
 import java.util.Collection;
 import java.util.List;
 
 public interface SolrOperator {
 
-    <T> void addOrUpdate(T object);
+    <T> void addObject(T object);
 
-    void addOrUpdate(Collection<Object> objects);
+    void addObjects(Collection<Object> objects);
 
     void deleteByQuery(String collection, String query);
 
-    void deleteById(String collection, List<String> ids);
+    void deleteById(String collection, String...ids);
 
-    Object query(String collection, SolrQ solrQ);
+    <T> SolrResult<T> query(String collection, SolrQ solrQ, Class<T> tClass);
+
+    JSONObject query(String collection, SolrQ solrQ);
 
     <T> SolrDocResult<T> query(SolrQ solrQ, Class<T> tClass);
 
@@ -25,4 +30,5 @@ public interface SolrOperator {
 
     void fullImport(String collection);
 
+    void update(SolrUpdateObject atomicUpdateObject);
 }

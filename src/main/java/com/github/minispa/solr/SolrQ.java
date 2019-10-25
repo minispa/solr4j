@@ -10,6 +10,8 @@ import java.util.Map;
 
 public class SolrQ implements Serializable {
 
+
+
     private Map<String, String[]> vals = new LinkedHashMap<>();
 
     // ===============================================================================
@@ -305,6 +307,14 @@ public class SolrQ implements Serializable {
     public static final String SNIPPETS = "hl.snippets";
 
     public static final String SCORE = "score";
+
+    public static final String DOCS = "docs";
+    public static final String NUM_FOUND = "numFound";
+    public static final String RESPONSE = "response";
+
+    public static final String CURSOR_MARK_START = "*";
+    public static final String CURSOR_MARK_PARAM = "cursorMark";
+    public static final String CURSOR_MARK_NEXT = "nextCursorMark";
 
 
     // ===============================================================================
